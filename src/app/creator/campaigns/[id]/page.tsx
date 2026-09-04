@@ -86,7 +86,9 @@ function CampaignSubmit({ campaignId }: { campaignId: string }) {
           ← {t("nav.campaigns")}
         </Link>
         <h1 className="text-2xl font-semibold tracking-tight">{campaign.title}</h1>
-        <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
+        {/* div, not p: Badge renders a div, and a div inside a p is invalid HTML
+            that trips React's hydration check. */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
           <span className="font-medium text-foreground">
             {t("common.perThousand", { amount: fmtMoney(campaign.payoutPer1kViewsCents) })}
           </span>
@@ -96,7 +98,7 @@ function CampaignSubmit({ campaignId }: { campaignId: string }) {
             </Badge>
           ))}
           <span>{t("creator.campaignEnds", { date: fmtDate(campaign.endsAt) })}</span>
-        </p>
+        </div>
       </div>
 
       <Card>
