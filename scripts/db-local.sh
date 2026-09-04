@@ -63,7 +63,30 @@ up() {
   fi
   ensure_db clipping_dev
   ensure_db clipping_test
+  # Point the project env files at this cluster when they do not exist yet, so
+  # a no-Docker machine following the quick start works without hand-editing
+  # URLs. Never touch files the user already set up (e.g. Neon or Docker).
+  write_env_if_absent .env.local "postgres://postgres@$HOST:$PORT/clipping_dev"
+  write_env_if_absent .env.test "postgres://postgres@$HOST:$PORT/clipping_test"
   echo "local postgres ready at postgres://postgres@$HOST:$PORT (trust auth)"
+}
+
+# Creates $ROOT/$file with a DATABASE_URL (plus TEST_DATABASE_URL for .env.test)
+# pointing at the local cluster, unless the file already exists.
+write_env_if_absent() {
+  local file="$1" url="$2"
+  if [ -f "$ROOT/$file" ]; then
+    return 0
+  fi
+  {
+    echo "# Written by scripts/db-local.sh for the project-local Postgres cluster."
+    echo "DATABASE_URL=$url"
+    if [ "$file" = ".env.test" ]; then
+      echo "TEST_DATABASE_URL=$url"
+    fi
+    echo "COOKIE_SECRET=$(LC_ALL=C tr -dc 'a-zA-Z0-9' < /dev/urandom | head -c 48)"
+  } > "$ROOT/$file"
+  echo "wrote $file (local cluster defaults)"
 }
 
 stop() {
