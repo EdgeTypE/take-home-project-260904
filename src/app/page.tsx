@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Megaphone, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,7 +13,9 @@ import { switchDemoUser } from "@/lib/switch-user";
 export default function HomePage() {
   const { t } = useI18n();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [switchingRole, setSwitchingRole] = useState<"admin" | "creator" | null>(null);
+  const [switchFailed, setSwitchFailed] = useState(false);
   const whoami = trpc.dev.whoami.useQuery();
   const users = trpc.dev.listUsers.useQuery();
 
@@ -25,8 +28,21 @@ export default function HomePage() {
     }
     if (userId !== whoami.data?.id) {
       setSwitchingRole(role);
-      await switchDemoUser(userId);
+      setSwitchFailed(false);
+      try {
+        await switchDemoUser(userId);
+        // The session cookie changed, but cached query data still describes the
+        // previous user (queries stay fresh for 10s). Refetch everything that
+        // is mounted (the header shows the active identity, RoleGuards gate on
+        // it) so the UI converges on the new session before we navigate.
+        await queryClient.invalidateQueries();
+      } catch {
+        setSwitchFailed(true);
+        setSwitchingRole(null);
+        return;
+      }
     }
+    setSwitchingRole(null);
     router.push(role === "admin" ? "/admin/campaigns" : "/creator/campaigns");
   };
 
@@ -36,7 +52,14 @@ export default function HomePage() {
         <h1 className="text-balance text-3xl font-semibold tracking-tight md:text-4xl">
           {t("home.headline")}
         </h1>
-        <p className="text-muted-foreground">{t("common.signInPrompt")}</p>
+        <p className="text-muted-foreground">
+          {whoami.data
+            ? t("home.signedInPrompt", {
+                email: whoami.data.email,
+                role: t(`roles.${whoami.data.role}`),
+              })
+            : t("common.signInPrompt")}
+        </p>
       </div>
 
       <div className="grid w-full gap-4 sm:grid-cols-2" aria-live="polite">
@@ -80,12 +103,9 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {whoami.data ? (
-        <p className="text-sm text-muted-foreground">
-          {t("header.viewingAs", {
-            email: whoami.data.email,
-            role: t(`roles.${whoami.data.role}`),
-          })}
+      {switchFailed ? (
+        <p role="alert" className="text-sm text-destructive">
+          {t("common.switchFailed")}
         </p>
       ) : null}
     </div>

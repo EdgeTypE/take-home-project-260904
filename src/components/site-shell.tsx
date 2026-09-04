@@ -4,11 +4,18 @@ import type { ReactNode } from "react";
 import { TRPCProvider } from "@/components/trpc-provider";
 import { I18nProvider, useI18n } from "@/components/i18n-provider";
 import { AppHeader } from "@/components/app-header";
+import type { Lang } from "@/lib/i18n/dictionaries";
 
-export function SiteShell({ children }: { children: ReactNode }) {
+export function SiteShell({
+  children,
+  initialLang,
+}: {
+  children: ReactNode;
+  initialLang?: Lang;
+}) {
   return (
     <TRPCProvider>
-      <I18nProvider>
+      <I18nProvider initialLang={initialLang}>
         <ShellInner>{children}</ShellInner>
       </I18nProvider>
     </TRPCProvider>

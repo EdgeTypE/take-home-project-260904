@@ -19,6 +19,8 @@ export const tr = {
     english: "English",
     turkish: "Türkçe",
     signInPrompt: "Başlamak için bir demo rolü seç. Bu demoda giriş yok.",
+    pickRole: "Bir demo rolü seç",
+    switchFailed: "Demo kullanıcısı değiştirilemedi. Tekrar dene.",
     notApplicable: "–",
     ago: "önce",
     currencyCode: "USD",
@@ -59,6 +61,7 @@ export const tr = {
     creatorTitle: "İçerik üreticisi çalışma alanı",
     creatorDescription: "Klip kabul eden kampanyalara göz at ve TikTok, Instagram veya YouTube gönderilerini gönder.",
     enterAs: "{name} olarak devam et",
+    signedInPrompt: "{email} ({role}) olarak oturum açıldı. Aşağıdan bir çalışma alanına devam et ya da üst menüden rol değiştir.",
     notSignedIn: "Henüz demo kullanıcısı seçilmedi",
   },
   nav: {

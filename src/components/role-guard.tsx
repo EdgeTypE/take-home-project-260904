@@ -43,7 +43,7 @@ export function RoleGuard({
         <AlertTitle>{t("common.signInPrompt")}</AlertTitle>
         <AlertDescription>
           <Button asChild variant="outline" className="mt-2">
-            <Link href="/">{t("common.retry")}</Link>
+            <Link href="/">{t("common.pickRole")}</Link>
           </Button>
         </AlertDescription>
       </Alert>
@@ -56,7 +56,7 @@ export function RoleGuard({
         <AlertTitle>{t("errors.FORBIDDEN")}</AlertTitle>
         <AlertDescription>
           <Button asChild variant="outline" className="mt-2">
-            <Link href="/">{t("home.notSignedIn")}</Link>
+            <Link href="/">{t("common.pickRole")}</Link>
           </Button>
         </AlertDescription>
       </Alert>

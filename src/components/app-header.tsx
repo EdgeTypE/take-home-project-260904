@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import {
@@ -20,7 +19,6 @@ import type { Lang } from "@/lib/i18n/dictionaries";
 
 export function AppHeader() {
   const { t, lang, setLang } = useI18n();
-  const router = useRouter();
   const queryClient = useQueryClient();
   const whoami = trpc.dev.whoami.useQuery();
   const users = trpc.dev.listUsers.useQuery();
@@ -38,10 +36,10 @@ export function AppHeader() {
     setSwitching(true);
     try {
       await switchDemoUser(userId);
-      // The signed cookie changed: drop every cached query so no data from the
-      // previous demo user lingers in the client.
-      queryClient.clear();
-      router.refresh();
+      // The signed cookie changed: refetch everything currently mounted so no
+      // data from the previous demo user lingers (header identity, role guard,
+      // current page queries). Inactive queries refetch when next mounted.
+      await queryClient.invalidateQueries();
     } finally {
       setSwitching(false);
       setPendingUserId("");

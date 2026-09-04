@@ -17,6 +17,8 @@ export const en = {
     english: "English",
     turkish: "Türkçe",
     signInPrompt: "Pick a demo role to start. There is no login in this demo.",
+    pickRole: "Pick a demo role",
+    switchFailed: "Could not switch demo user. Try again.",
     notApplicable: "–",
     ago: "ago",
     currencyCode: "USD",
@@ -57,6 +59,7 @@ export const en = {
     creatorTitle: "Creator workspace",
     creatorDescription: "Browse campaigns that are accepting clips and submit your TikTok, Instagram or YouTube posts.",
     enterAs: "Continue as {name}",
+    signedInPrompt: "Signed in as {email} ({role}). Continue into a workspace below, or switch roles from the header.",
     notSignedIn: "No demo user selected yet",
   },
   nav: {
