@@ -48,7 +48,7 @@ export const tr = {
     },
   },
   header: {
-    viewingAs: "Görüntleyen: {email} ({role})",
+    viewingAs: "Görüntüleyen: {email} ({role})",
     switchUser: "Demo kullanıcısını değiştir",
     demoStrip: "Girişsiz demo çalışma alanı. Kullanıcı seçiciyle yönetici ve içerik üreticisi tarafları arasında geçiş yap.",
   },

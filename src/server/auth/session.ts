@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 export const SESSION_COOKIE = "demo_session";
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // one week
+export const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24 * 7; // one week
 
 function sessionSecret(): string {
   const secret = process.env.COOKIE_SECRET;
@@ -19,16 +19,11 @@ export interface SessionPayload {
   userId: string;
 }
 
-export function encodeSessionCookie(userId: string): string {
+// The unsigned cookie value carries a signed JSON payload: base64url(body).signature.
+export function createSessionValue(userId: string): string {
   const payload = Buffer.from(JSON.stringify({ userId }), "utf8").toString("base64url");
   const signature = sign(payload);
-  return [
-    `${SESSION_COOKIE}=${payload}.${signature}`,
-    "Path=/",
-    "HttpOnly",
-    "SameSite=Lax",
-    `Max-Age=${SESSION_MAX_AGE_SECONDS}`,
-  ].join("; ");
+  return `${payload}.${signature}`;
 }
 
 export function decodeSessionCookie(cookieValue: string | null | undefined): SessionPayload | null {

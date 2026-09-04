@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Select,
   SelectContent,
@@ -14,33 +15,37 @@ import {
 } from "@/components/ui/select";
 import { useI18n } from "@/components/i18n-provider";
 import { trpc } from "@/lib/trpc/client";
+import { switchDemoUser } from "@/lib/switch-user";
 import type { Lang } from "@/lib/i18n/dictionaries";
 
 export function AppHeader() {
   const { t, lang, setLang } = useI18n();
   const router = useRouter();
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
   const whoami = trpc.dev.whoami.useQuery();
   const users = trpc.dev.listUsers.useQuery();
-  const switchUser = trpc.dev.switchUser.useMutation({
-    onSuccess: async () => {
-      setPendingUserId("");
-      await utils.dev.whoami.invalidate();
-      router.refresh();
-    },
-  });
   const [pendingUserId, setPendingUserId] = useState<string>("");
+  const [switching, setSwitching] = useState(false);
 
   const currentUser = whoami.data;
-
   const admins = users.data?.filter((row) => row.role === "admin") ?? [];
   const creators = users.data?.filter((row) => row.role === "creator") ?? [];
 
-  const handleSwitch = (userId: string) => {
+  const handleSwitch = async (userId: string) => {
     if (!userId || userId === currentUser?.id) {
       return;
     }
-    switchUser.mutate({ userId });
+    setSwitching(true);
+    try {
+      await switchDemoUser(userId);
+      // The signed cookie changed: drop every cached query so no data from the
+      // previous demo user lingers in the client.
+      queryClient.clear();
+      router.refresh();
+    } finally {
+      setSwitching(false);
+      setPendingUserId("");
+    }
   };
 
   return (
@@ -116,8 +121,9 @@ export function AppHeader() {
               value={pendingUserId || currentUser?.id || undefined}
               onValueChange={(value) => {
                 setPendingUserId(value);
-                handleSwitch(value);
+                void handleSwitch(value);
               }}
+              disabled={switching}
               aria-label={t("header.switchUser")}
             >
               <SelectTrigger className="h-8 w-44 text-xs" aria-label={t("header.switchUser")}>
@@ -143,7 +149,6 @@ export function AppHeader() {
               </SelectContent>
             </Select>
           </div>
-
         </div>
       </div>
     </header>

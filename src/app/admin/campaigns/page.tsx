@@ -137,7 +137,7 @@ function CampaignList() {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>{t("common.appName")}</TableHead>
+                <TableHead>{t("admin.fieldTitle")}</TableHead>
                 <TableHead>{t("admin.fieldStatus")}</TableHead>
                 <TableHead>{t("admin.labelBudget")}</TableHead>
                 <TableHead>{t("admin.labelSpent")}</TableHead>

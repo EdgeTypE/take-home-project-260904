@@ -110,23 +110,9 @@ describe("access control", () => {
     );
   });
 
-  it("switches demo users by writing a session cookie only for real users", async () => {
+  it("reports whoami as null for anonymous contexts", async () => {
     const db = testDb();
-    const alice = await createUser(db, { email: "alice@example.test" });
-    const cookies: string[] = [];
-    const caller = appRouter.createCaller({
-      db,
-      user: null,
-      setCookie: (cookie) => cookies.push(cookie),
-    });
-
+    const caller = appRouter.createCaller({ db, user: null, setCookie: () => {} });
     expect(await caller.dev.whoami()).toBeNull();
-
-    const result = await caller.dev.switchUser({ userId: alice.id });
-    expect(result.ok).toBe(true);
-    expect(cookies[0]).toContain("demo_session=");
-
-    const missingId = "00000000-0000-4000-8000-000000000000";
-    await expectErrorCode(caller.dev.switchUser({ userId: missingId }), "NOT_FOUND");
   });
 });

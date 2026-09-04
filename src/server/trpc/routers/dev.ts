@@ -1,10 +1,8 @@
-import { eq } from "drizzle-orm";
-import { z } from "zod";
 import { publicProcedure, router } from "@/server/trpc/trpc";
 import { users } from "@/server/db/schema";
-import { encodeSessionCookie } from "@/server/auth/session";
-import { TRPCError } from "@trpc/server";
 
+// Demo helpers only. Session switching lives in POST /api/dev/switch-user so
+// the HttpOnly cookie is written by Next's own response handling.
 export const devRouter = router({
   whoami: publicProcedure.query(({ ctx }) => {
     if (!ctx.user) {
@@ -20,21 +18,4 @@ export const devRouter = router({
       .orderBy(users.role, users.email);
     return rows;
   }),
-
-  // Demo auth only: switching to any seeded user. There is no real login, so
-  // this is the entire sign-in surface of the take-home.
-  switchUser: publicProcedure
-    .input(z.object({ userId: z.string().uuid() }))
-    .mutation(async ({ ctx, input }) => {
-      const rows = await ctx.db
-        .select({ id: users.id })
-        .from(users)
-        .where(eq(users.id, input.userId))
-        .limit(1);
-      if (rows.length === 0) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "User not found" });
-      }
-      ctx.setCookie(encodeSessionCookie(input.userId));
-      return { ok: true as const };
-    }),
 });

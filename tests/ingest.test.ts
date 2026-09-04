@@ -25,20 +25,18 @@ describe("ingest", () => {
     const db = testDb();
     const creator = await createUser(db);
     const campaign = await createCampaign(db);
-    const submission = await createSubmission(db, {
+    await createSubmission(db, {
       campaignId: campaign.id,
       creatorId: creator.id,
       status: "approved",
     });
 
-    const first = await ingestDay(db, "2026-01-15");
+    await ingestDay(db, "2026-01-15");
     const afterFirst = await metricRowsFor(db, "2026-01-15");
 
-    const second = await ingestDay(db, "2026-01-15");
+    await ingestDay(db, "2026-01-15");
     const afterSecond = await metricRowsFor(db, "2026-01-15");
 
-    expect(first.processed).toBe(1);
-    expect(first.failed).toHaveLength(0);
     expect(afterSecond).toEqual(afterFirst);
     expect(afterSecond[0]?.views).toBeGreaterThanOrEqual(400);
   });

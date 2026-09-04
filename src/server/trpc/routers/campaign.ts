@@ -1,7 +1,12 @@
 import { TRPCError } from "@trpc/server";
 import { and, asc, count, desc, eq, gte, ilike, inArray, lte, sum } from "drizzle-orm";
 import { z } from "zod";
-import { adminProcedure, creatorProcedure, router } from "@/server/trpc/trpc";
+import {
+  adminProcedure,
+  creatorProcedure,
+  protectedProcedure,
+  router,
+} from "@/server/trpc/trpc";
 import {
   campaigns,
   submissionMetrics,
@@ -21,30 +26,22 @@ function mapIsoToDate(value: string | undefined): Date | undefined {
   return value ? new Date(value) : undefined;
 }
 
-function campaignToDto(campaign: Campaign, viewerRole: "admin" | "creator") {
-  if (viewerRole === "admin") {
-    return {
-      id: campaign.id,
-      title: campaign.title,
-      platforms: campaign.platforms,
-      payoutPer1kViewsCents: campaign.payoutPer1kViewsCents,
-      totalBudgetCents: campaign.totalBudgetCents,
-      budgetSpentCents: campaign.budgetSpentCents,
-      budgetLeftCents: Math.max(
-        0,
-        campaign.totalBudgetCents - campaign.budgetSpentCents,
-      ),
-      status: campaign.status,
-      startsAt: campaign.startsAt,
-      endsAt: campaign.endsAt,
-      createdAt: campaign.createdAt,
-    };
-  }
+// One DTO shape for every campaign read. Creators get the same payload as
+// admins; the creator UI simply renders a subset of it. Keeping a single
+// shape avoids a union type leaking into every client query and keeps the
+// serialized money fields trivially consistent.
+function campaignToDto(campaign: Campaign) {
   return {
     id: campaign.id,
     title: campaign.title,
     platforms: campaign.platforms,
     payoutPer1kViewsCents: campaign.payoutPer1kViewsCents,
+    totalBudgetCents: campaign.totalBudgetCents,
+    budgetSpentCents: campaign.budgetSpentCents,
+    budgetLeftCents: Math.max(
+      0,
+      campaign.totalBudgetCents - campaign.budgetSpentCents,
+    ),
     status: campaign.status,
     startsAt: campaign.startsAt,
     endsAt: campaign.endsAt,
@@ -81,7 +78,7 @@ export const campaignRouter = router({
         .offset((input.page - 1) * input.pageSize);
 
       return {
-        items: rows.map((campaign) => campaignToDto(campaign, "admin")),
+        items: rows.map((campaign) => campaignToDto(campaign)),
         total,
         page: input.page,
         pageSize: input.pageSize,
@@ -102,10 +99,12 @@ export const campaignRouter = router({
         ),
       )
       .orderBy(asc(campaigns.endsAt));
-    return rows.map((campaign) => campaignToDto(campaign, "creator"));
+    return rows.map((campaign) => campaignToDto(campaign));
   }),
 
-  getById: creatorProcedure
+  // Any signed-in user can read a campaign: admins see everything, creators
+  // only campaigns that are actively accepting clips.
+  getById: protectedProcedure
     .input(campaignIdInputSchema)
     .query(async ({ ctx, input }) => {
       const rows = await ctx.db
@@ -127,7 +126,7 @@ export const campaignRouter = router({
         // by guessing ids.
         throw new TRPCError({ code: "NOT_FOUND", message: "Campaign not found" });
       }
-      return campaignToDto(campaign, ctx.user.role);
+      return campaignToDto(campaign);
     }),
 
   create: adminProcedure
@@ -144,7 +143,7 @@ export const campaignRouter = router({
           endsAt: new Date(input.endsAt),
         })
         .returning();
-      return campaignToDto(inserted[0]!, "admin");
+      return campaignToDto(inserted[0]!);
     }),
 
   update: adminProcedure
@@ -172,7 +171,7 @@ export const campaignRouter = router({
         })
         .where(eq(campaigns.id, input.id))
         .returning();
-      return campaignToDto(updated[0]!, "admin");
+      return campaignToDto(updated[0]!);
     }),
 
   // Admin overview: approved views, budget position and a zero-filled daily

@@ -163,9 +163,11 @@ export async function seedDatabase(db: Db): Promise<void> {
   await insertHistory(db, completedAlice.id, 10, 900, 2500);
   await insertHistory(db, completedBob.id, 10, 600, 2500);
 
-  // 2) Active campaign with one approved clip and two pending ones. The
-  //    remaining budget covers Alice's clip but not Bob's, so the first admin
-  //    click can demonstrate both the budget ceiling and campaign completion.
+  // 2) Active campaign with one approved clip and two pending ones, staged so
+  //    the demo tells the whole budget story in two clicks. The approved clip
+  //    already spent $20 of the $30 budget, leaving $10. Alice's pending clip
+  //    costs exactly $10 (fills the budget -> campaign completes on its own),
+  //    Bob's costs $30 (approval must fail with a typed over-budget error).
   const active = await insertCampaign(db, {
     title: "Summer Drop Teaser",
     platforms: ["tiktok"],
@@ -174,7 +176,7 @@ export async function seedDatabase(db: Db): Promise<void> {
     status: "active",
     startsAt: daysFromNow(-3),
     endsAt: daysFromNow(9),
-    budgetSpentCents: 500,
+    budgetSpentCents: 2000,
   });
   const approvedClip = await insertSubmission(db, {
     campaignId: active.id,
@@ -197,9 +199,10 @@ export async function seedDatabase(db: Db): Promise<void> {
     platform: "tiktok",
     status: "pending",
   });
-  await insertHistory(db, approvedClip.id, 4, 300, 1000);
-  await insertMetricToday(db, pendingAlice.id, 2000); // costs 1000, fits
-  await insertMetricToday(db, pendingBob.id, 6000); // costs 3000, over budget
+  // Grows to 4,000 views by today: at approval time it paid 4 x $5 = $20.
+  await insertHistory(db, approvedClip.id, 4, 1000, 4000);
+  await insertMetricToday(db, pendingAlice.id, 2000); // costs 1000, exactly the $10 left
+  await insertMetricToday(db, pendingBob.id, 6000); // costs 3000, over the $10 left
 
   // 3) Fresh active campaign with no submissions yet: the creator submit demo.
   await insertCampaign(db, {
