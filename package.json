@@ -12,7 +12,7 @@
     "test:watch": "vitest",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "tsx scripts/db-migrate.ts",
-    "db:seed": "tsx scripts/db-seed.ts",
+    "db:seed": "tsx scripts/db-seed-cli.ts",
     "db:reset": "tsx scripts/db-reset.ts",
     "db:local-up": "bash scripts/db-local.sh up",
     "db:local-stop": "bash scripts/db-local.sh stop",
